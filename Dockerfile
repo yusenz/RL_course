@@ -19,6 +19,7 @@ RUN pip install --upgrade pip
 ## using pytorch docker
 # RUN pip install torch==2.3.1 
 RUN pip install "autorom[accept-rom-license]"
+RUN pip install opencv-python-headless
 RUN pip install rl-zoo3==2.3.0
 # to install the latest commit of a repo
 ADD "https://api.github.com/repos/yusenz/gym-maze/commits?per_page=1" latest_commit
