@@ -117,7 +117,9 @@ class CardiacModel_Env(Env):
     def reward(self, state, setpoint, action):
         return np.exp(-1*np.sum(np.power((state-setpoint),2)*5)) 
 
-    def reset(self):
+    def reset(self, seed=None):
+        if seed is not None:
+            self.seed = seed
         print('seed: ', self.seed)
         super().reset(seed=self.seed)
         self.num_episode += 1
@@ -134,10 +136,10 @@ class CardiacModel_Env(Env):
         if self.consider_sp:
 
             hist = (np.array(self.listhistory+ list(self.setpoints.flatten()))).reshape(1, -1).flatten()
-            return hist
+            return hist, []
         
         else:
-            return np.array(self.listhistory)
+            return np.array(self.listhistory), []
 
  
     
