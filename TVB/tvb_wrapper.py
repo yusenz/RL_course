@@ -101,7 +101,7 @@ class TVBWrapper(Env):
 
     def step(self, action):
         self.nstep += 1
-        self.eqn_t.parameters['b'] = 60
+        self.eqn_t.parameters['b'] = 10
         weighting = self.weighting
         weighting[69] = action[0]
         weighting[72] = action[1]
