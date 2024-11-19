@@ -1,10 +1,10 @@
-import gym
+import gymnasium as gym
 import numpy as np
-from gym import error, spaces, utils
-from gym.utils import seeding
+from gymnasium import error, spaces, utils
+from gymnasium.utils import seeding
 import rl_dbs.oscillator_cpp as oscillator_cpp
-from gym import Env
-from gym.spaces import Discrete, MultiDiscrete, MultiBinary, Box
+from gymnasium import Env
+from gymnasium.spaces import Discrete, MultiDiscrete, MultiBinary, Box
 
 
 class oscillatorEnv(gym.Env):
@@ -105,7 +105,7 @@ class oscillatorEnv(gym.Env):
       return arrayed_version, self.Reward(self.x_val,self.x_state,val), False, self.done, {} 
 
   
-  def reset(self):
+  def reset(self, seed=None):
     """
     Reset environment, and get a window 250 of self.len_state size
 
@@ -135,7 +135,7 @@ class oscillatorEnv(gym.Env):
     
     #if sigmoid:
         #arrayed_version = sigmoid(arrayed_version)
-    return arrayed_version
+    return arrayed_version, []
     
   def render(self, mode='human', close=False):
     """
