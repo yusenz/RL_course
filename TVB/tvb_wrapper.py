@@ -12,7 +12,7 @@ class TVBWrapper(Env):
         self.history_len = history_len  # the length of history data, unit is ms - EEG sample rate is 1kHz so 2000ms is also 2000 samples
         # EEG data is normalized to [-1,1]
         self.observation_space = spaces.Box(low=-1, high=1, shape=(self.history_len, 65), dtype=np.float32)
-        self.action_space = spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.max_len = max_len  # the maximum length of the simulation, unit is timestep
 
 
@@ -53,7 +53,7 @@ class TVBWrapper(Env):
                                 integrator=self.integrator, monitors=self.what_to_watch)
         self.simulator.configure()
         weighting = np.zeros((76))
-        weighting[[69, 72]] = np.array([2.])
+        # weighting[[69, 72]] = np.array([2.])
         self.weighting = weighting
         self.eqn_t = equations.Linear()
         self.eqn_t.parameters['a'] = 0.0
@@ -77,12 +77,11 @@ class TVBWrapper(Env):
 
 
 
-    def reset(self):
+    def reset(self,seed=None):
         self.nstep = 0
         self.integrator = integrators.HeunStochastic(dt=self.dt, noise=self.hiss)
-        self.simulator = simulator.Simulator(model=self.model, connectivity=self.conn,
-                                coupling=self.coupl, 
-                                integrator=self.integrator, monitors=self.what_to_watch)
+        self.simulator = simulator.Simulator(model=self.model, connectivity=self.conn, 
+                                coupling=self.coupl, monitors=self.what_to_watch)
         self.simulator.configure()
         (traw, raw), (tEEG, EEG) = self.simulator.run(simulation_length=self.init_length)
         self._raw_history = raw
@@ -95,20 +94,22 @@ class TVBWrapper(Env):
 
         self.state = self.EEG
         # normalize only for state but not raw eeg
-        self.state /= (np.max(self.state,0) - np.min(self.state,0))
-        self.state -= np.mean(self.state,0)
+        # self.state /= (np.max(self.state,0) - np.min(self.state,0))
+        # self.state -= np.mean(self.state,0)
 
-        return self.state
+        return self.state, []
 
     def step(self, action):
         self.nstep += 1
-        self.eqn_t.parameters['b'] = action * 10
-        stimulus = patterns.StimuliRegion(temporal = self.eqn_t, connectivity=self.conn, weight=self.weighting)
+        self.eqn_t.parameters['b'] = 60
+        weighting = self.weighting
+        weighting[69] = action[0]
+        weighting[72] = action[1]
+        stimulus = patterns.StimuliRegion(temporal = self.eqn_t, connectivity=self.conn, weight=weighting)
         stimulus.configure_space()
         # handling raw history as init condition
         self.simulator = simulator.Simulator(model=self.model, connectivity=self.conn,
-                                coupling=self.coupl, 
-                                integrator=self.integrator, monitors=self.what_to_watch,
+                                coupling=self.coupl, monitors=self.what_to_watch, 
                                 initial_conditions=self._raw_history, stimulus=stimulus)
         #TODO: stimulus from action
         self.simulator.configure()
@@ -122,15 +123,18 @@ class TVBWrapper(Env):
 
         self.state = self.EEG
         # normalize only for state but not raw eeg
-        self.state /= (np.max(self.state,0) - np.min(self.state,0))
-        self.state -= np.mean(self.state,0)
+        # self.state /= (np.max(self.state,0) - np.min(self.state,0))
+        # self.state -= np.mean(self.state,0)
 
-        reward = self.reward(self.state, action)
+        reward = self.reward(self.EEG, action)
         truncated = self.nstep >= self.max_len
         return self.state, reward, False, truncated, {}
     
     def reward(self, state, action):
         # reward function
-        return 0
+
+        EEG_norm = np.average(np.sum((state - np.average(state,axis=0)) ** 2)/self.history_len)
+
+        return - (EEG_norm)/100000000 + 5
     def render(self):
         pass
