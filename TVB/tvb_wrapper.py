@@ -80,7 +80,7 @@ class TVBWrapper(Env):
     def reset(self,seed=None):
         self.nstep = 0
         self.integrator = integrators.HeunStochastic(dt=self.dt, noise=self.hiss)
-        self.simulator = simulator.Simulator(model=self.model, connectivity=self.conn, 
+        self.simulator = simulator.Simulator(model=self.model, connectivity=self.conn, integrator = self.integrator,
                                 coupling=self.coupl, monitors=self.what_to_watch)
         self.simulator.configure()
         (traw, raw), (tEEG, EEG) = self.simulator.run(simulation_length=self.init_length)
@@ -109,7 +109,7 @@ class TVBWrapper(Env):
         stimulus.configure_space()
         # handling raw history as init condition
         self.simulator = simulator.Simulator(model=self.model, connectivity=self.conn,
-                                coupling=self.coupl, monitors=self.what_to_watch, 
+                                coupling=self.coupl, monitors=self.what_to_watch, integrator = self.integrator,
                                 initial_conditions=self._raw_history, stimulus=stimulus)
         #TODO: stimulus from action
         self.simulator.configure()
